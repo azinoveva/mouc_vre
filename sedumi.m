@@ -1,3 +1,5 @@
+%% Courtesy of A.Kannan (HU Berlin) -- needs to be adapted!
+
 function [outputArg1] = sedumi(model)
 %SEDUMI Summary of this function goes here
 %   Detailed explanation goes here
