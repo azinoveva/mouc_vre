@@ -4,7 +4,7 @@ Multiobjective Unit Commitment Problem for Variable Renewable Networks
 ## The code is HEAVILY under construction!
 
 ### TODO list:
-- [ ] Rewrite matrix A5 in "flipped" dimensions
+- [x] Rewrite matrix A5 in "flipped" dimensions
 - [ ] Constraints overhaul
 - [ ] Second objective (VRE) implementation
 - [ ] (big one) Benchmark *gurobi* -- this can be also used later for SeDuMi

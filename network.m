@@ -66,11 +66,19 @@ for i = 1:N
     vec = [ones(1, t), zeros(1, T)];
     Agen = [];
     for j = 1:T
-        for k = 1:min(j,t)
+        Agen = [Agen; circshift(vec, j-1)];
     end
     Agen = Agen(:,t:end-1);
     A5 = blkdiag(A5, Agen);
 end
+
+% I first constructed the matrix with an idea of x = [x11, ..., xn1, ..., xnt]^T
+% (so basically swapped indices). So I'll just permute the columns and come
+% to the correct result.
+
+permute = reshape(1:240, 24, [])'; % Reshape to 10x24 matrix
+permute = permute(:); % Convert to column vector
+A5 = A5(permute, permute);
 
 A6 = [];
 for i = 1:T
