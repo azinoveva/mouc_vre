@@ -1,4 +1,4 @@
-function result = qp(N,T,Q,c,A,b)
+function result = solve_gurobi(N,T,Q,c,A,b)
 %% Quadratic programming problem solved with Gurobi MATLAB API.
 
     % Start constructing the model

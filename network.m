@@ -22,7 +22,7 @@ T_min = [8, 8, 5, 5, 6, 3, 3, 1, 1, 1];
 
 N = 10; T = 24; % number of generators and time periods (24H)
 
-%% Construct Q and c in z^TQz + c^Tz for price modeling
+%% Construct Q and c in z'Qz + c'z for price modeling
 
 Q = [];
 
@@ -35,11 +35,12 @@ Q = sparse(blkdiag(Q, zeros(2*N*T)));
 c = [repelem(b, T), repelem(C_run, T), repelem(C_start, T)]';
 
 
-%% Construct the matrices A1 through A7:
-% Set g = [g11, ..., g1T, ..., gNT]^T, 
-%     x = [x11, ..., x1T, ..., xNT]^T
-%     y = [y11, ..., y1T, ..., yNT]^T
-% and z = [g, x, y]^T
+%% Construct the constraint matrix:
+
+% Set g = [g11, ..., g1T, ..., gNT]
+%     x = [x11, ..., x1T, ..., xNT]
+%     y = [y11, ..., y1T, ..., yNT]
+% and z = [g, x, y]'
 
 A1 = eye(N*T);
 
@@ -67,7 +68,8 @@ for i = 1:N
     A5 = blkdiag(A5, Agen);
 end
 
-%% A6, A7 -- runtime-on connection (x_jt - x_jt-1 = y_jt)
+% ------------------------------------------------------
+% A6, A7 -- runtime-on connection (x_jt - x_jt-1 = y_jt)
 % Unclear on the boundaries
 
 % A6 = [];
@@ -76,11 +78,9 @@ end
 % end
 %
 % A7 = -diag(ones(1, N*T-1), 1);
+% ------------------------------------------------------
 
-%% Upper and lower boundary
-
-
-%% Assemble the matrix A:
+% Assemble
 
 A = [A1,            A2,             zeros(N*T);         % Upper bound on g
      zeros(N*T),    A1,             zeros(N*T);         % Upper bound on x
@@ -103,4 +103,5 @@ A = sparse(A);
 
 clear A1 A2 A3 A5 Agen t;
 
-result = qp(N,T,Q,c,A,v);
+% b in constraints Ax=b has become v to not overwrite the network parameters 
+result = solve_gurobi(N,T,Q,c,A,v);
