@@ -6,7 +6,9 @@ Multiobjective Unit Commitment Problem for Variable Renewable Networks
 ### TODO list:
 - [x] Rewrite matrix A5 in "flipped" dimensions
 - [x] A1-A5 Constraints overhaul
-- [ ] Add lower/upper bounds
+- [x] Add lower/upper bounds
+- [x] Add start-up to running relation
+- [ ] Infeasibility on the boundary! See `iismodel.ilp``
 - [ ] Second objective (VRE) implementation
 - [ ] Implement for SeDuMi solver
 - [ ] Benchmark

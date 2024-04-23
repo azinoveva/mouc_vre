@@ -72,12 +72,10 @@ end
 % A6, A7 -- runtime-on connection (x_jt - x_jt-1 = y_jt)
 % Unclear on the boundaries
 
-% A6 = [];
-% for i = 1:T
-%    A6 = blkdiag(A6, -eye(N) + diag(ones(1, N-1), 1));
-% end
-%
-% A7 = -diag(ones(1, N*T-1), 1);
+A6 = [];
+for i = 1:T
+   A6 = blkdiag(A6, -eye(N) + diag(ones(1, N-1), -1));
+end
 % ------------------------------------------------------
 
 % Assemble
@@ -88,12 +86,14 @@ A = [A1,            A2,             zeros(N*T);         % Upper bound on g
     -A1,            zeros(N*T),     zeros(N*T);         % Lower bound on g  
      zeros(N*T),   -A1,             zeros(N*T);         % Lower bound on x
      zeros(N*T),    zeros(N*T),    -A1;                 % Lower bound on y
+     zeros(N*T),    A6,            -A1;                 % 'On' and 'Running' connection
+     zeros(N*T),   -A6,             A1;                 % 'On' and 'Running' connection
      zeros(N*T),   -A1,             A5;                 % Minimal uptime  
     -A3,            zeros(T, N*T),  zeros(T, N*T)];     % Meeting the demand
 
 %% Create vector b
 
-v = [zeros(1, N*T), ones(1, 2*N*T), zeros(1, 4*N*T), -D]';
+v = [zeros(1, N*T), ones(1, 2*N*T), zeros(1, 6*N*T), -D]';
 
 %% Clean up
 
@@ -104,4 +104,4 @@ A = sparse(A);
 clear A1 A2 A3 A5 Agen t;
 
 % b in constraints Ax=b has become v to not overwrite the network parameters 
-result = solve_gurobi(N,T,Q,c,A,v);
+result = solve_gurobi(N,T,Q,c,A,v, start);
