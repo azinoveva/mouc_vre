@@ -1,0 +1,32 @@
+\ Model matlab_copy
+\ LP format - for model browsing. Use MPS format to capture full model detail.
+Minimize
+ 
+Subject To
+ R10: C10 - 455 C250 <= 0
+ R34: C34 - 455 C274 <= 0
+ R58: C58 - 130 C298 <= 0
+ R82: C82 - 130 C322 <= 0
+ R106: C106 - 162 C346 <= 0
+ R130: C130 - 80 C370 <= 0
+ R154: C154 - 85 C394 <= 0
+ R178: C178 - 55 C418 <= 0
+ R202: C202 - 55 C442 <= 0
+ R226: C226 - 55 C466 <= 0
+ R1690: C250 + C490 <= 0
+ R2170: - C10 - C34 - C58 - C82 - C106 - C130 - C154 - C178 - C202 - C226
+   <= -1450
+Bounds
+ C10 free
+ C34 free
+ C58 free
+ C82 free
+ C106 free
+ C130 free
+ C154 free
+ C178 free
+ C202 free
+ C226 free
+Binaries
+ C250 C274 C298 C322 C346 C370 C394 C418 C442 C466 C490
+End
