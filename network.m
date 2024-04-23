@@ -41,10 +41,7 @@ c = [repelem(b, T), repelem(C_run, T), repelem(C_start, T)]';
 %     y = [y11, ..., y1T, ..., yNT]^T
 % and z = [g, x, y]^T
 
-A1 = [];
-for i = 1:T
-    A1 = blkdiag(A1, eye(N));
-end
+A1 = eye(N*T);
 
 A2 = [];
 for i = 1:N
@@ -56,7 +53,7 @@ for i = 1:T
     A3 = repmat(-eye(T), 1, N);
 end
 
-A4 = -A1;
+% A4 = -A1
 
 A5 = [];
 for i = 1:N
@@ -70,30 +67,40 @@ for i = 1:N
     A5 = blkdiag(A5, Agen);
 end
 
-A6 = [];
-for i = 1:T
-    A6 = blkdiag(A6, -eye(N) + diag(ones(1, N-1), 1));
-end
+%% A6, A7 -- runtime-on connection (x_jt - x_jt-1 = y_jt)
+% Unclear on the boundaries
 
-A7 = -diag(ones(1, N*T-1), 1);
+% A6 = [];
+% for i = 1:T
+%    A6 = blkdiag(A6, -eye(N) + diag(ones(1, N-1), 1));
+% end
+%
+% A7 = -diag(ones(1, N*T-1), 1);
+
+%% Upper and lower boundary
+
 
 %% Assemble the matrix A:
 
-A = [A1,            A2,             zeros(N*T);
-     A3,            zeros(T, N*T),  zeros(T, N*T);
-     zeros(N*T),    A4,             A5     ;
-     zeros(N*T),    A6,             A7     ];
+A = [A1,            A2,             zeros(N*T);         % Upper bound on g   - G_max
+     zeros(N*T),    A1,             zeros(N*T);         % Upper bound on x   - 1
+     zeros(N*T),    zeros(N*T),     A1;                 % Upper bound on y   - 1
+    -A1,            zeros(N*T),     zeros(N*T);         % Lower bound on g   - 0    
+     zeros(N*T),    A1,             zeros(N*T);         % Lower bound on x   - 0 
+     zeros(N*T),    zeros(N*T),     A1;                 % Lower bound on y   - 0
+     zeros(N*T),   -A1,             A5;                 % Minimal uptime     - 0
+     A3,            zeros(T, N*T),  zeros(T, N*T)];     % Meeting the demand - D
+
+%% Create vector b
+
+v = -[repelem(G_max, T), ones(1, 2*N*T), zeros(1, 4*N*T), D]';
+
+%% Clean up
 
 % A predominantly consists of zeroes. Squeezing them out can save a lot of
 % space -- therefore sparse representation.
 A = sparse(A);
 
-%% Create vector b
-
-v = -[zeros(1, N*T), D, zeros(1, 2*N*T)]';
-
-%% Clean up
-
-clear A1 A2 A3 A4 A5 A6 A7 Agen t;
+clear A1 A2 A3 A5 Agen t;
 
 result = qp(N,T,Q,c,A,v);
