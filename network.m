@@ -50,7 +50,7 @@ end
 
 A3 = [];
 for i = 1:T
-    A3 = repmat(-eye(T), 1, N);
+    A3 = repmat(eye(T), 1, N);
 end
 
 % A4 = -A1
@@ -82,18 +82,18 @@ end
 
 %% Assemble the matrix A:
 
-A = [A1,            A2,             zeros(N*T);         % Upper bound on g   - G_max
-     zeros(N*T),    A1,             zeros(N*T);         % Upper bound on x   - 1
-     zeros(N*T),    zeros(N*T),     A1;                 % Upper bound on y   - 1
-    -A1,            zeros(N*T),     zeros(N*T);         % Lower bound on g   - 0    
-     zeros(N*T),    A1,             zeros(N*T);         % Lower bound on x   - 0 
-     zeros(N*T),    zeros(N*T),     A1;                 % Lower bound on y   - 0
-     zeros(N*T),   -A1,             A5;                 % Minimal uptime     - 0
-     A3,            zeros(T, N*T),  zeros(T, N*T)];     % Meeting the demand - D
+A = [A1,            A2,             zeros(N*T);         % Upper bound on g
+     zeros(N*T),    A1,             zeros(N*T);         % Upper bound on x
+     zeros(N*T),    zeros(N*T),     A1;                 % Upper bound on y
+    -A1,            zeros(N*T),     zeros(N*T);         % Lower bound on g  
+     zeros(N*T),   -A1,             zeros(N*T);         % Lower bound on x
+     zeros(N*T),    zeros(N*T),    -A1;                 % Lower bound on y
+     zeros(N*T),   -A1,             A5;                 % Minimal uptime  
+    -A3,            zeros(T, N*T),  zeros(T, N*T)];     % Meeting the demand
 
 %% Create vector b
 
-v = -[repelem(G_max, T), ones(1, 2*N*T), zeros(1, 4*N*T), D]';
+v = [zeros(1, N*T), ones(1, 2*N*T), zeros(1, 4*N*T), -D]';
 
 %% Clean up
 

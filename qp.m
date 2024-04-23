@@ -17,7 +17,7 @@ function result = qp(N,T,Q,c,A,b)
     model.vtype = [repmat('C', 1, N*T), repmat('B', 1, 2*N*T)];
 
     gurobi_write(model, 'qp.lp');
-    result = gurobi_iis(model);
+    result = gurobi(model);
     
 
 end
