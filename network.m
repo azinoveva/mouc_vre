@@ -26,19 +26,19 @@ N = 10; T = 24; % number of generators and time periods (24H)
 
 Q = [];
 
-for t = 1:T
-    Q = blkdiag(Q, diag(a));
+for i = 1:N
+    Q = blkdiag(Q, a(i)*eye(T));
 end
 
 Q = sparse(blkdiag(Q, zeros(2*N*T)));
 
-c = [repmat(b, 1, T), repmat(C_run, 1, T), repmat(C_start, 1, T)]';
+c = [repelem(b, T), repelem(C_run, T), repelem(C_start, T)]';
 
 
-%% Construct the matrices A1 through A5:
-% Set g = [g11, ..., g1n, ..., gtn]^T, 
-%     x = [x11, ..., x1n, ..., xtn]^T
-%     y = [y11, ..., y1n, ..., ytn]^T
+%% Construct the matrices A1 through A7:
+% Set g = [g11, ..., g1T, ..., gNT]^T, 
+%     x = [x11, ..., x1T, ..., xNT]^T
+%     y = [y11, ..., y1T, ..., yNT]^T
 % and z = [g, x, y]^T
 
 A1 = [];
@@ -47,18 +47,16 @@ for i = 1:T
 end
 
 A2 = [];
-for i = 1:T
-    A2 = blkdiag(A2, -diag(G_max));
+for i = 1:N
+    A2 = blkdiag(A2, -G_max(i)*eye(T));
 end
 
 A3 = [];
-for i = 1:N
+for i = 1:T
     A3 = repmat(-eye(T), 1, N);
 end
 
 A4 = -A1;
-
-% Let's assume we start in the OFF-state for every generator.
 
 A5 = [];
 for i = 1:N
@@ -72,27 +70,19 @@ for i = 1:N
     A5 = blkdiag(A5, Agen);
 end
 
-% I first constructed the matrix with an idea of x = [x11, ..., xn1, ..., xnt]^T
-% (so basically swapped indices). So I'll just permute the columns and come
-% to the correct result.
-
-permute = reshape(1:240, 24, [])'; % Reshape to 10x24 matrix
-permute = permute(:); % Convert to column vector
-A5 = A5(permute, permute);
-
 A6 = [];
 for i = 1:T
     A6 = blkdiag(A6, -eye(N) + diag(ones(1, N-1), 1));
 end
 
-A7 = -A1;
+A7 = -diag(ones(1, N*T-1), 1);
 
 %% Assemble the matrix A:
 
 A = [A1,            A2,             zeros(N*T);
      A3,            zeros(T, N*T),  zeros(T, N*T);
-     zeros(N*T),    A4,             A5;
-     zeros(N*T),    A6,             A7];
+     zeros(N*T),    A4,             A5     ;
+     zeros(N*T),    A6,             A7     ];
 
 % A predominantly consists of zeroes. Squeezing them out can save a lot of
 % space -- therefore sparse representation.
@@ -102,21 +92,8 @@ A = sparse(A);
 
 v = -[zeros(1, N*T), D, zeros(1, 2*N*T)]';
 
-
-%% Create upper bound. Lower bound is 0 for every variable.
-
-ub = [repmat(G_max, 1, T), ones(1, 2*N*T)]; 
 %% Clean up
 
 clear A1 A2 A3 A4 A5 A6 A7 Agen t;
 
-result = qp(N,T,Q,c,A,v,ub);
-
-schedule = reshape(result.x, [T, N, 3]);
-
-figure
-x = linspace(1, 24, 24);
-for gen = 1:N
-   y_gen = schedule(1:T, gen, 1);
-   plot(x, y_gen); hold on
-end
+result = qp(N,T,Q,c,A,v);

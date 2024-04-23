@@ -1,4 +1,4 @@
-function result = qp(N,T,Q,c,A,b,ub)
+function result = qp(N,T,Q,c,A,b)
 %% Quadratic programming problem solved with Gurobi MATLAB API.
 
     % Start constructing the model
@@ -13,18 +13,13 @@ function result = qp(N,T,Q,c,A,b,ub)
 
     model.A = A;
     model.rhs = b;
-    model.sense = '<';
+    model.sense = [repmat('<', 1, (2*N+1)*T), repmat('=', 1, N*T)];
     model.vtype = [repmat('C', 1, N*T), repmat('B', 1, 2*N*T)];
+    model.start = zeros(1, 3*N*T);
     model.lb = zeros(1, 3*N*T);
-    model.ub = ub;
-    model.start = [NaN(1, N*T), 1, 1, zeros(1, N-2), NaN(1, (N*T-N)), 1, 1, NaN(1, (N*T-2)),];
-        
-    %zeros(1, 3*N*T);
 
     gurobi_write(model, 'qp.lp');
+    result = gurobi_iis(model);
     
-    params = struct();
-    params.runtime = 100;
-    result = gurobi(model, params);
 
 end
