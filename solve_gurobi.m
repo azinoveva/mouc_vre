@@ -17,8 +17,7 @@ function result = solve_gurobi(N,T,Q,c,A,b)
     model.vtype = [repmat('C', 1, N*T), repmat('B', 1, 2*N*T)];
 
     gurobi_write(model, 'model.lp');
-    params.resultfile = 'iismodel.ilp';
-    result = gurobi(model, params);
+    result = gurobi(model);
     
 
 end

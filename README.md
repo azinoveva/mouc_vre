@@ -8,7 +8,7 @@ Multiobjective Unit Commitment Problem for Variable Renewable Networks
 - [x] A1-A5 Constraints overhaul
 - [x] Add lower/upper bounds
 - [x] Add start-up to running relation
-- [ ] Infeasibility on the boundary!
+- [x] Infeasibility on the boundary!
 - [ ] Second objective (VRE) implementation
 - [ ] Implement for SeDuMi solver
 - [ ] Benchmark

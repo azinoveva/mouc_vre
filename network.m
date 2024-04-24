@@ -29,12 +29,12 @@ N = 10; T = 24; % number of generators and time periods (24H)
 Q = [];
 
 for i = 1:N
-    Q = blkdiag(Q, a(i)*eye(T));
+    Q = blkdiag(Q, b(i)*eye(T));
 end
 
 Q = sparse(blkdiag(Q, zeros(2*N*T)));
 
-c = [repelem(b, T), repelem(C_run, T), repelem(C_start, T)]';
+c = [repelem(a, T), repelem(C_run, T), repelem(C_start, T)]';
 
 
 %% Construct the constraint matrix:
@@ -74,7 +74,10 @@ end
 % A6 -- runtime-on connection (x_jt - x_jt-1 = y_jt)
 % Unclear on the boundaries
 
-A6 = eye(N*T) - diag(ones(1, T*N-1), -1);
+A6 = [];
+for i = 1:N
+    A6 = blkdiag(A6, eye(T) - diag(ones(1, T-1), -1));
+end
 
 % ------------------------------------------------------
 
@@ -94,15 +97,14 @@ A = [A1,            A2,             zeros(N*T);         % Upper bound on g
      zeros(N*T),   -A1,             zeros(N*T);         % Lower bound on x
      zeros(N*T),    zeros(N*T),    -A1;                 % Lower bound on y
      zeros(N*T),    A6,            -A1;                 % 'On' and 'Running' connection
-     zeros(N*T),   -A6,             A1;                 % 'On' and 'Running' connection
-     zeros(N*T),   -A1,             A5;                 % Minimal uptime  
+     zeros(N*T),   -A1,             A5;                 % Minimal uptime
     -A3,            zeros(T, N*T),  zeros(T, N*T);      % Meeting the demand
      zeros(N, N*T), A7,             zeros(N, N*T)       % Starting state: generators 1 and 2 are running; the rest is off
     ];     
 
 %% Create vector b
 
-v = [zeros(1, N*T), ones(1, 2*N*T), zeros(1, 6*N*T), -D, start]';
+v = [zeros(1, N*T), ones(1, 2*N*T), zeros(1, 5*N*T), -D, start]';
 
 %% Clean up
 
@@ -114,3 +116,7 @@ clear A1 A2 A3 A5 A6 Agen t;
 
 % b in constraints Ax=b has become v to not overwrite the network parameters 
 result = solve_gurobi(N,T,Q,c,A,v);
+
+%% If model feasible
+
+schedule = reshape(result.x, [T, N, 3]);
