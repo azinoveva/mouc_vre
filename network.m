@@ -71,24 +71,19 @@ for i = 1:N
 end
 
 % ------------------------------------------------------
-% A6, A7 -- runtime-on connection (x_jt - x_jt-1 = y_jt)
+% A6 -- runtime-on connection (x_jt - x_jt-1 = y_jt)
 % Unclear on the boundaries
 
 A6 = eye(N*T) - diag(ones(1, T*N-1), -1);
 
 % ------------------------------------------------------
 
-% ------------------------------------------------------
-% A6, A7 -- runtime-on connection (x_jt - x_jt-1 = y_jt)
-% Unclear on the boundaries
 
 A7 = zeros(10, 240);
 for i = 1:N
     A7(i, 1 + T*(i-1)) = 1;
 end
 
-
-% ------------------------------------------------------
 
 % Assemble
 
