@@ -20,6 +20,8 @@ G_max = [455, 455, 130, 130, 162, 80, 85, 55, 55, 55];
 
 T_min = [8, 8, 5, 5, 6, 3, 3, 1, 1, 1];
 
+start = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0]; % starting state of the generators: two first are running
+
 N = 10; T = 24; % number of generators and time periods (24H)
 
 %% Construct Q and c in z'Qz + c'z for price modeling
@@ -72,10 +74,20 @@ end
 % A6, A7 -- runtime-on connection (x_jt - x_jt-1 = y_jt)
 % Unclear on the boundaries
 
-A6 = [];
-for i = 1:T
-   A6 = blkdiag(A6, -eye(N) + diag(ones(1, N-1), -1));
+A6 = eye(N*T) - diag(ones(1, T*N-1), -1);
+
+% ------------------------------------------------------
+
+% ------------------------------------------------------
+% A6, A7 -- runtime-on connection (x_jt - x_jt-1 = y_jt)
+% Unclear on the boundaries
+
+A7 = zeros(10, 240);
+for i = 1:N
+    A7(i, 1 + T*(i-1)) = 1;
 end
+
+
 % ------------------------------------------------------
 
 % Assemble
@@ -89,11 +101,13 @@ A = [A1,            A2,             zeros(N*T);         % Upper bound on g
      zeros(N*T),    A6,            -A1;                 % 'On' and 'Running' connection
      zeros(N*T),   -A6,             A1;                 % 'On' and 'Running' connection
      zeros(N*T),   -A1,             A5;                 % Minimal uptime  
-    -A3,            zeros(T, N*T),  zeros(T, N*T)];     % Meeting the demand
+    -A3,            zeros(T, N*T),  zeros(T, N*T);      % Meeting the demand
+     zeros(N, N*T), A7,             zeros(N, N*T)       % Starting state: generators 1 and 2 are running; the rest is off
+    ];     
 
 %% Create vector b
 
-v = [zeros(1, N*T), ones(1, 2*N*T), zeros(1, 6*N*T), -D]';
+v = [zeros(1, N*T), ones(1, 2*N*T), zeros(1, 6*N*T), -D, start]';
 
 %% Clean up
 
@@ -101,7 +115,7 @@ v = [zeros(1, N*T), ones(1, 2*N*T), zeros(1, 6*N*T), -D]';
 % space -- therefore sparse representation.
 A = sparse(A);
 
-clear A1 A2 A3 A5 Agen t;
+clear A1 A2 A3 A5 A6 Agen t;
 
 % b in constraints Ax=b has become v to not overwrite the network parameters 
-result = solve_gurobi(N,T,Q,c,A,v, start);
+result = solve_gurobi(N,T,Q,c,A,v);
