@@ -1,14 +1,47 @@
 %% Courtesy of A.Kannan (HU Berlin) -- needs to be adapted!
+%
+% This function solves a QP subject to binary constraints
+% of the form:
+%
+% min 0.5*y'*Q*y + c'*y
+% x,z
+% st: Ay <= b
+% z \in {0,1}
+% Note that y = [x;z]; is the vector of input variables.
+%
+% --INPUTS-----------------------------------------------------------------
+%   Q       [n-by-n]  Hessian of the QP
+%   c       [n-by-1]  Linear QP terms
+%   A       [m-by-n]  Linear constraint matrix
+%   b       [m-by-1]  Right hand side constraint vector
+%   mbin    [scalar]  Number of binary variables (size(z))
+%   opt     [integer] Algorithm used
+%                     = 1, ADDM
+%                     = 2, Barrier
+%                     = 3, SDP
+%                     = 4, CPLEX (standard solvers)
+% --OUTPUTS----------------------------------------------------------------
+%   yout    [n-by-1]  Optimal solution
+%   fout    [scalar]  Optimal objective value
+%   iter    [scalar]  Number of outer iterations
+%
+%   Aswin Kannan, Humboldt Univ. zu Berlin, Sep. 2023
+%
+%   The author thanks Prof. Uday Shanbhag, Penn State, who was responsible
+%   for the initial ideas and several recommendations throughout. 
+%
+function result = solve_sedumi(N,T,Q,c,A,b)
 
-function [outputArg1] = sedumi(model)
-%SEDUMI Summary of this function goes here
-%   Detailed explanation goes here
-    %   SDP
+mbin = N*T*2;
+
+n = 3*N*T; m = size(A,1); nx  = n - mbin;
+%   SDP
     %   min  0.5*(Q.X) + c'*x
     %  s,X,x,t,u
     %         Ax + s = b, u = 1,
     %         X_ii = x_i (i in binary)
     %           X - xx' >=0 (or)  [X x; t' u] >= 0 , s >= 0
+    
     f = [0.5*Q c]';
     f = reshape(f,1,n*(n+1)); f = [zeros(m,1);f';zeros(n+1,1)];
     % vector arranged as s, reshaped(X, x) --> X(1,:),x1....,X(n,:),xn

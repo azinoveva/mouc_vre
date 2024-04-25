@@ -5,10 +5,10 @@
 %% Objective-related:
 
 % Linear cost coefficient
-a = [16.19, 17.26, 16.6, 16.5, 19.7, 22.26, 27.74, 25.92, 27.27, 27.79, 0, 0];
+lin_coef = [16.19, 17.26, 16.6, 16.5, 19.7, 22.26, 27.74, 25.92, 27.27, 27.79, 0, 0];
 
 % Quadratic cost coefficient
-b = [0.00048, 0.00031,  0.002,   0.00211,  0.00398, ... 
+quad_coef = [0.00048, 0.00031,  0.002,   0.00211,  0.00398, ... 
      0.00712, 0.000793, 0.00413, 0.002221, 0.00173, 0, 0];
 
 % Idling cost -- also a constant coefficient in the cost function
@@ -39,19 +39,22 @@ start = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0];
 Nconv = 10; Nvre = 2; T = 24; % number of generators and time periods (24H)
 N = Nconv + Nvre;
 
-%% Construct Q and c in z'Qz + c'z for price modeling
+%% Construct first objective: Q and c in z'Qz + c'z for price modeling
 
 % VRE units have no influence on construction of Q and c. The idling cost
 % is fixed and other costs do not apply (?)
 Q = [];
 
 for i = 1:N
-    Q = blkdiag(Q, b(i)*eye(T));
+    Q = blkdiag(Q, quad_coef(i)*eye(T));
 end
 
 Q = sparse(blkdiag(Q, zeros(2*N*T)));
 
-c = [repelem(a, T), repelem(C_run, T), repelem(C_start, T)]';
+c = [repelem(lin_coef, T), repelem(C_run, T), repelem(C_start, T)]';
+
+%% Construct second objective: maximum VRE penetration
+
 
 
 %% Construct the constraint matrix:
@@ -60,17 +63,22 @@ c = [repelem(a, T), repelem(C_run, T), repelem(C_start, T)]';
 %     x = [x11, ..., x1T, ..., xNT]
 %     y = [y11, ..., y1T, ..., yNT]
 % and z = [g, x, y]'
-
+% ------------------------------------------------------
+% A1 - "general" identity matrix
 
 A1 = eye(N*T);
 
-% Have to sample for VRE on an hourly basis
+% ------------------------------------------------------
+% A2 - power generation constraints. 
+
 A2 = [];
 for i = 1:Nconv
     A2 = blkdiag(A2, blkdiag(G_max(i)*eye(T)));
 end
 
+% Have to additionally sample for VRE on an hourly basis
 % Note: figre out how to apply function to an array
+
 wind_maxpower = [];
 solar_maxpower = [];
 for t = 1:T
@@ -78,17 +86,23 @@ for t = 1:T
     solar_maxpower = [solar_maxpower, pdf(t, "solar")];
 end
 
+% Assemble A4
 A2 = -blkdiag(A2, diag(wind_maxpower), diag(solar_maxpower));
 
+% ------------------------------------------------------
+% A3 - ensure we meet the demand
 
 A3 = [];
 for i = 1:T
     A3 = repmat(eye(T), 1, N);
 end
 
-% A4 = -A1
+% ------------------------------------------------------
+% A4 - ensure minimum uptime
+% Practically, we sample for start-ups in the last T_min hours and allow
+% shutdown if this window is clear of start-ups
 
-A5 = [];
+A4 = [];
 for i = 1:N
     t = T_min(i);
     vec = [ones(1, t), zeros(1, T)];
@@ -97,28 +111,27 @@ for i = 1:N
         Agen = [Agen; circshift(vec, j-1)];
     end
     Agen = Agen(:,t:end-1);
-    A5 = blkdiag(A5, Agen);
+    A4 = blkdiag(A4, Agen);
 end
 
 % ------------------------------------------------------
-% A6 -- runtime-on connection (x_jt - x_jt-1 = y_jt)
-% Unclear on the boundaries
+% A5 - runtime-on connection (x_jt - x_jt-1 = y_jt)
 
-A6 = [];
+A5 = [];
 for i = 1:N
-    A6 = blkdiag(A6, eye(T) - diag(ones(1, T-1), -1));
+    A5 = blkdiag(A5, eye(T) - diag(ones(1, T-1), -1));
 end
 
 % ------------------------------------------------------
+% A6 - incorporate sratring state
 
-
-A7 = zeros(N, N*T);
+A6 = zeros(N, N*T);
 for i = 1:N
-    A7(i, 1 + T*(i-1)) = 1;
+    A6(i, 1 + T*(i-1)) = 1;
 end
 
-
-% Assemble
+% ------------------------------------------------------
+% Assemble A
 
 A = [A1,            A2,             zeros(N*T);         % Upper bound on g
      zeros(N*T),    A1,             zeros(N*T);         % Upper bound on x
@@ -126,27 +139,21 @@ A = [A1,            A2,             zeros(N*T);         % Upper bound on g
     -A1,            zeros(N*T),     zeros(N*T);         % Lower bound on g  
      zeros(N*T),   -A1,             zeros(N*T);         % Lower bound on x
      zeros(N*T),    zeros(N*T),    -A1;                 % Lower bound on y
-     zeros(N*T),    A6,            -A1;                 % 'On' and 'Running' connection
-     zeros(N*T),   -A1,             A5;                 % Minimal uptime
+     zeros(N*T),    A5,            -A1;                 % 'On' and 'Running' connection
+     zeros(N*T),   -A1,             A4;                 % Minimal uptime
     -A3,            zeros(T, N*T),  zeros(T, N*T);      % Meeting the demand
-     zeros(N, N*T), A7,             zeros(N, N*T)       % Starting state: generators 1 and 2 are running; the rest is off
-    ];     
-
-%% Create vector b
-
-v = [zeros(1, N*T), ones(1, 2*N*T), zeros(1, 5*N*T), -D, start]';
-
-%% Clean up
+     zeros(N, N*T), A6,             zeros(N, N*T)       % Starting state: generators 1 and 2 are running; the rest is off
+    ];
 
 % A predominantly consists of zeroes. Squeezing them out can save a lot of
 % space -- therefore sparse representation.
+
 A = sparse(A);
 
-clear A1 A2 A3 A5 A6 A7 Agen t;
+%% Create vector b
 
-% b in constraints Ax=b has become v to not overwrite the network parameters 
-result = solve_gurobi(N,T,Q,c,A,v);
+b = [zeros(1, N*T), ones(1, 2*N*T), zeros(1, 5*N*T), -D, start]';
 
-%% If model feasible
+%% Clean up
 
-schedule = reshape(result.x, [T, N, 3]);
+clear A1 A2 A3 A4 A5 A6 Agen t i j vec solar_maxpower start wind_maxpower;
