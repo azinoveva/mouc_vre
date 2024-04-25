@@ -62,5 +62,7 @@ n = 3*N*T; m = size(A,1); nx  = n - mbin;
     yout = out(m+n^2+n+1:m+n^2+2*n,1);
     fout = 0.5*yout'*Q*yout+c'*yout;
     iter = INFO.iter;
+
+    result = yout;
 end
 
