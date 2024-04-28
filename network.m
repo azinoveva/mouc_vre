@@ -5,7 +5,7 @@
 %% Objective-related:
 
 % Linear cost coefficient
-lin_coef = [16.19, 17.26, 16.6, 16.5, 19.7, 22.26, 27.74, 25.92, 27.27, 27.79, 0, 0];
+lin_coef = [16.19, 17.26, 16.6, 16.5, 19.7, 22.26, 27.74, 25.92, 27.27, 27.79, 0.02, 0];
 
 % Quadratic cost coefficient
 quad_coef = [0.00048, 0.00031,  0.002,   0.00211,  0.00398, ... 
@@ -31,6 +31,10 @@ G_max = [455, 455, 130, 130, 162, 80, 85, 55, 55, 55];
 % Minimal running time of the units
 T_min = [8, 8, 5, 5, 6, 3, 3, 1, 1, 1, 1, 1];
 
+% Types of generators: 1 for conventional, -1 for VRE
+
+types = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1];
+
 % Starting state of the generators: two first conventional and wind farm
 % are running
 
@@ -51,7 +55,13 @@ end
 
 Q = sparse(blkdiag(Q, zeros(2*N*T)));
 
-c = [repelem(lin_coef, T), repelem(C_run, T), repelem(C_start, T)]';
+c_1 = [repelem(lin_coef, T), repelem(C_run, T), repelem(C_start, T)]';
+
+c_2 = [repelem(types, T), zeros(1, 2*N*T)]';
+
+weights = [0.3, 0.7];
+
+c = weights(1)*c_1 + weights(2)*c_2;
 
 %% Construct second objective: maximum VRE penetration
 
@@ -79,15 +89,15 @@ end
 % Have to additionally sample for VRE on an hourly basis
 % Note: figre out how to apply function to an array
 
-wind_maxpower = [];
-solar_maxpower = [];
+wind_power = [];
+solar_power = [];
 for t = 1:T
-    wind_maxpower = [wind_maxpower, pdf(t, "wind")];
-    solar_maxpower = [solar_maxpower, pdf(t, "solar")];
+    wind_power = [wind_power, pdf(t, "wind")];
+    solar_power = [solar_power, pdf(t, "solar")];
 end
 
 % Assemble A4
-A2 = -blkdiag(A2, diag(wind_maxpower), diag(solar_maxpower));
+A2 = -blkdiag(A2, diag(wind_power), diag(solar_power));
 
 % ------------------------------------------------------
 % A3 - ensure we meet the demand
@@ -156,4 +166,4 @@ b = [zeros(1, N*T), ones(1, 2*N*T), zeros(1, 5*N*T), -D, start]';
 
 %% Clean up
 
-clear A1 A2 A3 A4 A5 A6 Agen t i j vec solar_maxpower start wind_maxpower;
+clear A1 A2 A3 A4 A5 A6 Agen t i j vec solar_power start wind_power;

@@ -37,4 +37,5 @@ function result = solve_gurobi(N,T,Q,c,A,b)
     gurobi_write(model, 'model.lp');
     % Solve
     result = gurobi(model);  
+    
 end

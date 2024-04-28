@@ -1,4 +1,4 @@
-function [max_power] = pdf(hour, type)
+function power = pdf(hour, type)
 %PDF Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -26,10 +26,12 @@ if type == "wind"
     end
     sample = datasample(sequence, 1, 'Weights', wind_probs(1, :));
     max_power = wind_forecast * sample;
-
+    mu = log((max_power^2)/sqrt(max_power+max_power^2));
+    sigma = sqrt(log(max_power/(max_power^2)+1));
+    power = lognrnd(mu, sigma);
 elseif type == "solar"
-    if hour < 7 || hour > 16
-        max_power = 0;
+    if hour < 5 || hour > 20
+        power = 0;
     else
         if hour <= 12
             sequence = solar_probs(2, :);
@@ -38,6 +40,8 @@ elseif type == "solar"
         end
         sample = datasample(sequence, 1, 'Weights', solar_probs(1, :));
         max_power = solar_forecast * sample;
+        power = max_power * sin(pi * (hour - 5) / 15)^2;
     end
 end
+
 
