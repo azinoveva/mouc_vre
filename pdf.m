@@ -33,8 +33,8 @@ if type == "wind"
     max_power = wind_forecast * sample;
 
     % Transform for log-normal distribution
-    mu = log((max_power^2)/sqrt(max_power+max_power^2));
-    sigma = sqrt(log(max_power/(max_power^2)+1));
+    mu = log(1/sqrt(2) * max_power);
+    sigma = log(2);
 
     % Sample power
     power = lognrnd(mu, sigma);

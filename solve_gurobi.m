@@ -1,9 +1,9 @@
-function result = solve_gurobi(N,T,Q,c,A,b)
+function result = solve_gurobi(network)
 % Quadratic programming problem solved with Gurobi MATLAB API.
 %
 % z = [g; x; y] with x, y binary
 %
-% min z'*Q*z + c'*z
+% min z'*Q*z + c'*z, 
 %  z
 % such that: Az <= b
 %
@@ -18,18 +18,20 @@ function result = solve_gurobi(N,T,Q,c,A,b)
 % --OUTPUTS----------------------------------------------------------------
 %   result  struct              Optimal solution
 %
-%   Aleksandra Zinoveva, Aswin Kannan, HU Berlin, 2024   
+%   Aleksandra Zinoveva, Aswin Kannan, HU Berlin, 2024  
+
+    N = network.N; T = network.T;
     %% Construct the model
     model = struct();
     
     % Objectives
-    model.Q = Q;
-    model.obj = c;
+    model.Q = network.Q_biobj;
+    model.obj = network.c;
     model.modelsense = 'min';
 
     % Constraints
-    model.A = A;
-    model.rhs = b;
+    model.A = network.A;
+    model.rhs = network.b;
     model.sense = '<';
     model.vtype = [repmat('C', 1, N*T), repmat('B', 1, 2*N*T)]; % N*T continuous, 2N*T binary variables
 

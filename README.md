@@ -9,8 +9,8 @@ Multiobjective Unit Commitment Problem for Variable Renewable Networks
 - [x] Add lower/upper bounds
 - [x] Add start-up to running relation
 - [x] Infeasibility on the boundary!
-- [ ] Second objective (VRE) implementation
-- [ ] Implement for SeDuMi solver
+- [x] Second objective (VRE) implementation
+- [x] Implement for SeDuMi solver
 - [ ] Benchmark
 
 ### Generator parameters
@@ -26,3 +26,12 @@ Multiobjective Unit Commitment Problem for Variable Renewable Networks
 | U8   | 55  | 25.92 | 0.00413  | 660  |60    |  1  |
 | U9   | 55  | 27.27 | 0.002221 | 665  |60    |  1  |
 | U10  | 55  | 27.79 | 0.00173  | 670  |60    |  1  |
+
+### Demand 
+| 1AM | 2AM | 3AM | 4AM  | 5AM  | 6AM  | 7AM |  8AM | 9AM | 10AM | 11AM | 12AM |
+| --- | --- | --- | ---  | ---  | ---  | --- |  --- | --- | --- | --- | --- |
+| 750 | 850 | 950 | 1000  | 1100  | 1150  | 1200 |  1300 | 1400 | 1450 | 1500 | 1400 |
+| --- | --- | --- | ---  | ---  | ---  | --- |  --- | --- | --- | --- | --- |
+| 1PM | 2PM | 3PM | 4PM  | 5PM  | 6PM  | 7PM |  8PM | 9PM | 10PM | 11PM | 12PM |
+| --- | --- | --- | ---  | ---  | ---  | --- |  --- | --- | --- | --- | --- |
+| 1300 | 1200 | 1150 | 1000  | 1100  | 1200  | 1400 |  1300 | 1100 | 900 | 800 | 700 |

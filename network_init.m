@@ -1,7 +1,7 @@
+function network = network_init()
 %% Problem Formulation
-% Two last generating units are wind and solar based, so no fuel cost
-% there.
 
+network = struct();
 %% Objective-related:
 
 % Linear cost coefficient
@@ -12,7 +12,7 @@ quad_coef = [0.00048, 0.00031,  0.002,   0.00211,  0.00398, ...
      0.00712, 0.000793, 0.00413, 0.002221, 0.00173, 0, 0];
 
 % Idling cost -- also a constant coefficient in the cost function
-C_run = [1000, 970, 700, 680, 450, 370, 480, 660, 665, 670, 0, 20];
+C_run = [1000, 970, 700, 680, 450, 370, 480, 660, 665, 670, 20, 20];
 
 % Cost of starting the unit. Stopping is "free".
 C_start = [9000, 10000, 1100, 1120, 1800, 340, 520, 60, 60, 60, 0, 0];
@@ -40,39 +40,33 @@ types = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1];
 
 start = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]; 
 
-Nconv = 10; Nvre = 2; T = 24; % number of generators and time periods (24H)
+% Number of generators and time periods (24H)
+Nconv = 10; Nvre = 2; 
+T = 24; 
 N = Nconv + Nvre;
 
 %% Construct first objective: Q and c in z'Qz + c'z for price modeling
+% Set g = [g11, ..., g1T, ..., gNT]
+%     x = [x11, ..., x1T, ..., xNT]
+%     y = [y11, ..., y1T, ..., yNT]
+% and z = [g, x, y]'
 
 % VRE units have no influence on construction of Q and c. The idling cost
-% is fixed and other costs do not apply (?)
+% is fixed and other costs do not apply. Quadratic part appears only in the
+% first objective.
 Q = [];
 
 for i = 1:N
     Q = blkdiag(Q, quad_coef(i)*eye(T));
 end
 
-Q = sparse(blkdiag(Q, zeros(2*N*T)));
+network.Q = sparse(blkdiag(Q, zeros(2*N*T)));
 
-c_1 = [repelem(lin_coef, T), repelem(C_run, T), repelem(C_start, T)]';
-
-c_2 = [repelem(types, T), zeros(1, 2*N*T)]';
-
-weights = [0.3, 0.7];
-
-c = weights(1)*c_1 + weights(2)*c_2;
-
-%% Construct second objective: maximum VRE penetration
-
-
+% Linear components of the objectives 
+network.c1 = [repelem(lin_coef, T), repelem(C_run, T), repelem(C_start, T)]';
+network.c2 = [repelem(types, T), zeros(1, 2*N*T)]';
 
 %% Construct the constraint matrix:
-
-% Set g = [g11, ..., g1T, ..., gNT]
-%     x = [x11, ..., x1T, ..., xNT]
-%     y = [y11, ..., y1T, ..., yNT]
-% and z = [g, x, y]'
 % ------------------------------------------------------
 % A1 - "general" identity matrix
 
@@ -158,12 +152,15 @@ A = [A1,            A2,             zeros(N*T);         % Upper bound on g
 % A predominantly consists of zeroes. Squeezing them out can save a lot of
 % space -- therefore sparse representation.
 
-A = sparse(A);
+network.A = sparse(A);
+network.N = N;
+network.T = T;
 
 %% Create vector b
 
-b = [zeros(1, N*T), ones(1, 2*N*T), zeros(1, 5*N*T), -D, start]';
+network.b = [zeros(1, N*T), ones(1, 2*N*T), zeros(1, 5*N*T), -D, start]';
 
 %% Clean up
 
 clear A1 A2 A3 A4 A5 A6 Agen t i j vec solar_power start wind_power;
+end
