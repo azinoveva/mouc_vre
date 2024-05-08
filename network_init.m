@@ -5,17 +5,17 @@ network = struct();
 %% Objective-related:
 
 % Linear cost coefficient
-lin_coef = [16.19, 17.26, 16.6, 16.5, 19.7, 22.26, 27.74, 25.92, 27.27, 27.79, 0.02, 0];
+lin_coef = [16.19, 17.26, 16.6, 16.5, 19.7, 22.26, 27.74, 25.92, 27.27, 27.79, 0.02, 0.02];
 
 % Quadratic cost coefficient
 quad_coef = [0.00048, 0.00031,  0.002,   0.00211,  0.00398, ... 
-     0.00712, 0.000793, 0.00413, 0.002221, 0.00173, 0, 0];
+     0.00712, 0.000793, 0.00413, 0.002221, 0.00173, 0.00002, 0.00002];
 
 % Idling cost -- also a constant coefficient in the cost function
 C_run = [1000, 970, 700, 680, 450, 370, 480, 660, 665, 670, 20, 20];
 
 % Cost of starting the unit. Stopping is "free".
-C_start = [9000, 10000, 1100, 1120, 1800, 340, 520, 60, 60, 60, 0, 0];
+C_start = [9000, 10000, 1100, 1120, 1800, 340, 520, 60, 60, 60, 10, 10];
 
 %% Constraint-related
 

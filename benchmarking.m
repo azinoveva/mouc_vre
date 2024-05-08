@@ -16,7 +16,7 @@ for i = 1:length(span)
     cost_gurobi = [cost_gurobi; [obj1, obj2]];
 end
 
-semilogy(span, cost_gurobi(:, 1));
+loglog(cost_gurobi(:, 1), cost_gurobi(:, 2));
 
 %schedule_gurobi = reshape(result_gurobi.x, [T, N, 3]);
 
