@@ -1,3 +1,6 @@
 *.asv
 *.lp
 *.ilp
+rcuc_init.m
+*.mat
+*.png
