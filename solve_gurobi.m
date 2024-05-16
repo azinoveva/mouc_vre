@@ -33,7 +33,7 @@ function result = solve_gurobi(network)
     model.A = network.A;
     model.rhs = network.b;
     model.sense = '<';
-    model.vtype = [repmat('C', 1, N*T), repmat('B', 1, 2*N*T)]; % N*T continuous, 2N*T binary variables
+    model.vtype = [repmat('C', 1, N*T), repmat('B', 1, 2*N*T), repmat('C', 1, 2*T)]; % N*T continuous, 2N*T binary variables
 
     % Write the model into 'model.lp'
     gurobi_write(model, 'model.lp');
