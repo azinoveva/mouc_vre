@@ -135,11 +135,12 @@ A = [A1,                A2,                 zeros(N*T),         zeros(N*T, 2*T);
     -A1,                zeros(N*T),         zeros(N*T),         zeros(N*T, 2*T);         % Lower bound on g  
      zeros(N*T),       -A1,                 zeros(N*T),         zeros(N*T, 2*T);         % Lower bound on x
      zeros(N*T),        zeros(N*T),        -A1,                 zeros(N*T, 2*T);         % Lower bound on y
-     A7,                zeros(2*T, N*T),    zeros(2*T, N*T),   -A8;                      % Lower bound on v
+     A7,                zeros(2*T, N*T),    zeros(2*T, N*T),   -A8;                      % First lower bound on v (<0)
+     A7,                zeros(2*T, N*T),    zeros(2*T, N*T),   -A8;                      % Second lower bound on v (deviation)
      zeros(N*T),        A5,                -A1,                 zeros(N*T, 2*T);         % 'On' and 'Running' connection
      zeros(N*T),       -A1,                 A4,                 zeros(N*T, 2*T);         % Minimal uptime
     -A3,                zeros(T, N*T),      zeros(T, N*T),      zeros(T, 2*T);           % Meeting the demand
-     zeros(N, N*T),     A6,                 zeros(N, N*T),      zeros(N, 2*T)           % Starting state: generators 1 and 2 are running; the rest is off
+     zeros(N, N*T),     A6,                 zeros(N, N*T),      zeros(N, 2*T)            % Starting state: generators 1 and 2 are running; the rest is off
     ];
 
 % A predominantly consists of zeroes. Squeezing them out can save a lot of
@@ -151,9 +152,9 @@ network.T = T;
 
 %% Create vector b
 
-network.b = [zeros(1, N*T), ones(1, 2*N*T), zeros(1, 3*N*T), vre_penalty, zeros(1, 2*N*T) -D, start]';
+network.b = [zeros(1, N*T), ones(1, 2*N*T), zeros(1, 3*N*T+2*T), vre_penalty, zeros(1, 2*N*T), -D, start]';
 
-%% Construct first objective: Q and c in z'Qz + c'z + pen for price modeling
+%% Construct first objective: Q and c in z'Qz + c'z for price modeling
 % Set g = [g11, ..., g1T, ..., gNT]
 %     x = [x11, ..., x1T, ..., xNT]
 %     y = [y11, ..., y1T, ..., yNT]
@@ -171,12 +172,16 @@ for i = 1:N
     Q = blkdiag(Q, quad_coef(i)*eye(T));
 end
 
+% Quadratic cost component
 network.Q = sparse(blkdiag(Q, zeros(2*(N+1)*T)));
 
-% Linear components of the objectives 
-% network.c1 = [repelem(lin_coef, T), repelem(C_run, T), repelem(C_start, T)]';
+% Linear components of the objectives. The actual vector c is constructed
+% according to the penalty parameter in the benchmarking.
+% c1: First objective
 network.c1 = [repelem(lin_coef, T), repelem(C_run, T), repelem(C_start, T), zeros(1, 2*T)]';
+% c2: Second objective
 network.c2 = [repelem(types, T), zeros(1, 2*T*(N+1))]';
+% cpen: Penalty for VRE deviation from the expected value
 network.cpen = [zeros(1, 3*N*T), ones(1, 2*T)]';
 
 %% Clean up

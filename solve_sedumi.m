@@ -30,11 +30,17 @@
 %   The author thanks Prof. Uday Shanbhag, Penn State, who was responsible
 %   for the initial ideas and several recommendations throughout. 
 %
-function result = solve_sedumi(N,T,Q,c,A,b)
+function result = solve_sedumi(network)
+N = network.N;
+T = network.T;
+Q = network.Q_biobj;
+c = network.c;
+A = network.A;
+b = network.b;
 
 mbin = N*T*2;
 
-n = 3*N*T; m = size(A,1); nx  = n - mbin;
+n = size(c); m = size(A,1); nx  = n - mbin;
 %   SDP
     %   min  0.5*(Q.X) + c'*x
     %  s,X,x,t,u
@@ -42,7 +48,7 @@ n = 3*N*T; m = size(A,1); nx  = n - mbin;
     %         X_ii = x_i (i in binary)
     %           X - xx' >=0 (or)  [X x; t' u] >= 0 , s >= 0
     
-    f = [0.5*Q c]';
+    f = [Q c/2]';
     f = reshape(f,1,n*(n+1)); f = [zeros(m,1);f';zeros(n+1,1)];
     % vector arranged as s, reshaped(X, x) --> X(1,:),x1....,X(n,:),xn
     Amat = [eye(m), zeros(m,n^2+n),zeros(m,n+1)];

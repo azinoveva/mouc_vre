@@ -4,3 +4,4 @@
 rcuc_init.m
 *.mat
 *.png
+yalmip/
