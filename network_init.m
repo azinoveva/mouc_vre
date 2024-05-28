@@ -1,48 +1,63 @@
-function network = network_init()
-%% Problem Formulation
+function network = network_init(Nconv, T)
 
+if Nconv > 10
+    ME = MException('network: Nconv', ...
+        'You can add no more than 10 conventional units!',str);
+    throw(ME)
+end
+
+%% Problem Formulation
+% Allocate place for the network structure
 network = struct();
+
+% Pick three conventional units
+gens = sort(randperm(10, Nconv));
+
 %% Objective-related:
 
 % Linear cost coefficient
-lin_coef = [16.19, 17.26, 16.6, 16.5, 19.7, 22.26, 27.74, 25.92, 27.27, 27.79, 0.02, 0.02];
+lin_coef = [16.19, 17.26, 16.6, 16.5, 19.7, 22.26, 27.74, 25.92, 27.27, 27.79];
+lin_coef = [lin_coef(gens), 0, 0];
 
 % Quadratic cost coefficient
 quad_coef = [0.00048, 0.00031,  0.002,   0.00211,  0.00398, ... 
-     0.00712, 0.000793, 0.00413, 0.002221, 0.00173, 0, 0];
+     0.00712, 0.000793, 0.00413, 0.002221, 0.00173];
+quad_coef = [quad_coef(gens), 0, 0];
 
 % Idling cost -- also a constant coefficient in the cost function
-C_run = [1000, 970, 700, 680, 450, 370, 480, 660, 665, 670, 0.02, 0.02];
+C_run = [1000, 970, 700, 680, 450, 370, 480, 660, 665, 670];
+C_run = [C_run(gens), 0.02, 0.02];
 
 % Cost of starting the unit. Stopping is "free".
-C_start = [9000, 10000, 1100, 1120, 1800, 340, 520, 60, 60, 60, 10, 10];
+C_start = [9000, 10000, 1100, 1120, 1800, 340, 520, 60, 60, 60];
+C_start = [C_start(gens), 10, 10];
 
 %% Constraint-related
 
-% Demand for 24H
-D = [850,  950,  1050,  1100,  1200, 1250, ...
-     1300, 1400, 1500, 1650, 1700, 1600, ...
-     1400, 1200, 1150, 1000, 1100, 1300, ...
-     1500, 1300, 1100, 900, 800, 750];
-
 % Power limit of the conventional units.
 G_max = [455, 455, 130, 130, 162, 80, 85, 55, 55, 55];
+G_max = G_max(gens);
+
+% Generate demand
+
+% Demand for T hours
+D = demand(sum(G_max), T);
 
 % Minimal running time of the units
-T_min = [8, 8, 5, 5, 6, 3, 3, 1, 1, 1, 1, 1];
+T_min = [8, 8, 5, 5, 6, 3, 3, 1, 1, 1];
+T_min = [T_min(gens), 1, 1];
 
 % Types of generators: 1 for conventional, -1 for VRE
 
-types = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1];
+types = [ones(1, Nconv), -1, -1];
 
 % Starting state of the generators: two first conventional and wind farm
 % are running
 
-start = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]; 
+start = [1, zeros(1, Nconv-1), 1, 0]; 
 
 % Number of generators and time periods (24H)
-Nconv = 10; Nvre = 2; 
-T = 24; 
+Nvre = 2; 
 N = Nconv + Nvre;
 
 %% Construct the constraint matrix:
@@ -119,7 +134,7 @@ end
 wind_penalty = zeros(1, T) + quantile(wind_power, 0.5);
 
 solar_penalty = zeros(1, T);
-solar_penalty(5:20) = solar_penalty(5:20) + quantile(solar_power(5:20), 0.5);
+solar_penalty(5:T) = solar_penalty(5:T) + quantile(solar_power(5:T), 0.5);
 
 vre_penalty = [wind_penalty, solar_penalty];
 
