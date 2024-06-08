@@ -1,5 +1,31 @@
 function network = network_init(Nconv, T)
+% NETWORK_INIT Initializes the network structure for an electrical network optimization problem.
+%
+%   network = NETWORK_INIT(Nconv, T) initializes a network structure
+%   containing the necessary parameters and constraints for optimizing the
+%   operation of an electrical network with Nconv conventional units over a
+%   period of T time steps.
+%
+%   Inputs:
+%     Nconv - Number of conventional units to be included in the network (maximum 10).
+%     T     - Number of time steps (hours) over which the network operation is optimized.
+%
+%   Outputs:
+%     network - Structure containing the network parameters and constraints, including:
+%               - A  : Sparse constraint matrix.
+%               - b  : Vector of constraints.
+%               - Q  : Quadratic cost matrix.
+%               - c1 : Linear cost vector for the first objective.
+%               - c2 : Linear cost vector for the second objective.
+%               - cpen: Penalty cost vector for VRE deviations.
+%               - N  : Total number of generators (conventional + VRE).
+%               - T  : Number of time steps (hours).
+%
+%   Example:
+%     network = network_init(5, 24);
+%     This initializes a network with 5 conventional units over a 24-hour period.
 
+% Check if the number of conventional units exceeds the limit
 if Nconv > 10
     ME = MException('network: Nconv', ...
         'You can add no more than 10 conventional units!',str);

@@ -1,18 +1,6 @@
 # mouc_vre
 Multiobjective Unit Commitment Problem for Variable Renewable Networks
 
-## The code is HEAVILY under construction!
-
-### TODO list:
-- [x] Rewrite matrix A5 in "flipped" dimensions
-- [x] A1-A5 Constraints overhaul
-- [x] Add lower/upper bounds
-- [x] Add start-up to running relation
-- [x] Infeasibility on the boundary!
-- [x] Second objective (VRE) implementation
-- [x] Implement for SeDuMi solver
-- [ ] Benchmark
-
 ### Generator parameters
 | Unit | G_max | a   | b      | C_run  | C_start  | T_min |
 | ---  | --- | ---   | ---      | ---  | ---  | --- |

@@ -1,74 +1,77 @@
-%% Courtesy of A.Kannan (HU Berlin) -- needs to be adapted!
+function [z, solver_time] = solve_sedumi(network)
+% SOLVE_SEDUMI Solves a semidefinite programming problem using SeDuMi.
 %
-% This function solves a QP subject to binary constraints
-% of the form:
+%   [z, solver_time] = SOLVE_SEDUMI(network) solves the semidefinite 
+%   programming problem formulated for the given network structure using 
+%   the SeDuMi solver. It returns the solution vector and the solver time.
 %
-% min 0.5*y'*Q*y + c'*y
-% x,z
-% st: Ay <= b
-% z \in {0,1}
-% Note that y = [x;z]; is the vector of input variables.
+%   Inputs:
+%     network - Structure containing the network parameters, including:
+%               - Q_biobj : Quadratic cost matrix for the objective.
+%               - c       : Linear cost vector for the objective.
+%               - A       : Constraint matrix.
+%               - b       : Constraint vector.
 %
-% --INPUTS-----------------------------------------------------------------
-%   Q       [n-by-n]  Hessian of the QP
-%   c       [n-by-1]  Linear QP terms
-%   A       [m-by-n]  Linear constraint matrix
-%   b       [m-by-1]  Right hand side constraint vector
-%   mbin    [scalar]  Number of binary variables (size(z))
-%   opt     [integer] Algorithm used
-%                     = 1, ADDM
-%                     = 2, Barrier
-%                     = 3, SDP
-%                     = 4, CPLEX (standard solvers)
-% --OUTPUTS----------------------------------------------------------------
-%   yout    [n-by-1]  Optimal solution
-%   fout    [scalar]  Optimal objective value
-%   iter    [scalar]  Number of outer iterations
+%   Outputs:
+%     z          - Solution vector for the optimization problem.
+%     solver_time - Time taken by the solver to find the solution.
 %
-%   Aswin Kannan, Humboldt Univ. zu Berlin, Sep. 2023
+%   Example:
+%     % Initialize network structure (assuming network_init is defined)
+%     network = network_init(5, 24);
+%     % Solve the semidefinite programming problem
+%     [z, solver_time] = solve_sedumi(network);
 %
-%   The author thanks Prof. Uday Shanbhag, Penn State, who was responsible
-%   for the initial ideas and several recommendations throughout. 
-%
-function result = solve_sedumi(network)
-N = network.N;
-T = network.T;
-Q = network.Q_biobj;
-c = network.c;
-A = network.A;
-b = network.b;
-
-mbin = N*T*2;
-
-n = size(c); m = size(A,1); nx  = n - mbin;
-%   SDP
-    %   min  0.5*(Q.X) + c'*x
-    %  s,X,x,t,u
-    %         Ax + s = b, u = 1,
-    %         X_ii = x_i (i in binary)
-    %           X - xx' >=0 (or)  [X x; t' u] >= 0 , s >= 0
+%   Notes:
+%     - This function uses YALMIP to define and solve the semidefinite 
+%       programming problem. Ensure YALMIP and SeDuMi are installed and added 
+%       to the MATLAB path.
+%     - The network structure should contain fields Q_biobj, c, A, and b.
+%     - The solver is set to SeDuMi with verbosity level 1.
+%% Setup
+    Q = network.Q_biobj;
+    c = network.c;
     
-    f = [Q c/2]';
-    f = reshape(f,1,n*(n+1)); f = [zeros(m,1);f';zeros(n+1,1)];
-    % vector arranged as s, reshaped(X, x) --> X(1,:),x1....,X(n,:),xn
-    Amat = [eye(m), zeros(m,n^2+n),zeros(m,n+1)];
-    for i = 1:n
-        Amat(:,m+i*n+i) = A(:,i);
+    A = network.A;
+    b = network.b;
+    
+    % Number of variables
+    n = length(c);
+    
+    % Construct the augmented matrix Q_tilde
+    Q_tilde = [0, 0.5*c'; 0.5*c, Q];
+    
+    % Define variables in YALMIP
+    Z = sdpvar(n+1, n+1, 'symmetric');            % Symmetric matrix variable for homogenization
+    
+    % Define the homogenized objective function: (1/2) * trace(Q_tilde*X)
+    objective = trace(Q_tilde * Z);
+    
+    % Define the constraints
+    constraints = [Z >= 0, ... % Z must be positive semidefinite
+                   Z(1, 1) == 1]; % Original linear constraints, homogenized
+    
+    for i = 1:length(b)
+        Ai = [0, A(i, :); A(i, :)', zeros(n)];
+        constraints = [constraints, trace(Ai * Z) <= 2*b(i)];
     end
-    Amat = [Amat; [zeros(1,m+n^2+2*n),1]]; bm = [b;1];
-    Xmat = zeros(n-nx,m+(n+1)^2,1);
-    for i = nx+1:n
-        Xmat(i,m+(i-1)*(n+1)+i) = 1; Xmat(i,m+i*n+i) = -1;
-    end
-    Amat = [Amat;Xmat]; bm = [bm;zeros(n,1)];
-    % Finally for the binary constraint
-    K.f = 0; K.l = m; K.q = 0; K.r = 0; K.s = n+1;
-    % Use Sedumi after reformulation
-    [out,~,INFO] = sedumi(Amat,bm,f,K);
-    yout = out(m+n^2+n+1:m+n^2+2*n,1);
-    fout = 0.5*yout'*Q*yout+c'*yout;
-    iter = INFO.iter;
 
-    result = yout;
+    % Set up options for the solver
+    options = sdpsettings('solver', 'sedumi', 'verbose', 1);
+    
+    % Solve the problem
+    sol = optimize(constraints, objective, options);
+    
+    % Check if the solution is feasible
+    if sol.problem == 0
+        % Extract and display the solution
+        z = value(Z(2:end, 1));
+        solver_time = sol.solvertime;
+    else
+        ME = MException('sol.problem', ...
+        'The problem could not be solved!', str);
+        disp(sol.info);
+        throw(ME);
+    end
 end
 

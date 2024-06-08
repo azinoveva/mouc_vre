@@ -1,6 +1,33 @@
 function power = pdf(hour, type)
-%PDF Summary of this function goes here
-%   Detailed explanation goes here
+% PDF Generates a power output sample based on forecasted values and 
+% probability distributions for wind and solar farms.
+%
+%   power = PDF(hour, type) calculates the power output sample for the 
+%   specified hour and farm type using forecasted values and probability 
+%   distributions. The function returns the power output sample.
+%
+%   Inputs:
+%     hour - Integer representing the hour of the day (in 24-hour format).
+%     type - String specifying the type of farm ("wind" or "solar").
+%
+%   Outputs:
+%     power - Calculated power output sample for the given hour and farm type.
+%
+%   Example:
+%     % Generate a power output sample for a wind farm at 9 AM
+%     power = pdf(9, "wind");
+%
+%   Notes:
+%     - This function generates power output samples based on forecasted 
+%       values and probability distributions for wind and solar farms.
+%     - It utilizes log-normal and sine irradiation functions to model power 
+%       output for wind and solar farms, respectively.
+%     - The input 'hour' should be an integer in the range [1, 24], 
+%       representing the hour of the day.
+%     - The input 'type' should be a string, either "wind" or "solar", 
+%       specifying the type of farm.
+%     - Power output for solar farms is zero during nighttime (between 8 PM 
+%       and 5 AM).
 
 %% Forecasted output and probability distributions for ...
 
