@@ -64,10 +64,14 @@ C_start = [C_start(gens), 10, 10];
 G_max = [455, 455, 130, 130, 162, 80, 85, 55, 55, 55];
 G_max = G_max(gens);
 
-% Generate demand
 
-% Demand for T hours
-D = demand(sum(G_max), T);
+% Starting state of the generators: two first conventional and wind farm
+% are running
+start = [1, 1, zeros(1, Nconv-2), 1, 0]; 
+
+% Generate demand for T hours based on conventional units and their
+% starting state
+D = demand(G_max, start(1:end-2), T);
 
 % Minimal running time of the units
 T_min = [8, 8, 5, 5, 6, 3, 3, 1, 1, 1];
@@ -76,11 +80,6 @@ T_min = [T_min(gens), 1, 1];
 % Types of generators: 1 for conventional, -1 for VRE
 
 types = [ones(1, Nconv), -1, -1];
-
-% Starting state of the generators: two first conventional and wind farm
-% are running
-
-start = [1, zeros(1, Nconv-1), 1, 0]; 
 
 % Number of generators and time periods (24H)
 Nvre = 2; 

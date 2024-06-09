@@ -1,19 +1,21 @@
-function demand_profile = demand(max_capacity, T)
+function demand_profile = demand(gens, start, T)
 % DEMAND Generates a demand profile for an electrical network.
 %
 %   demand_profile = DEMAND(max_capacity, T) creates a demand profile with a
 %   sinusoidal base and random variation, ensuring the demand stays within realistic bounds.
 %
 %   Inputs:
-%     max_capacity - Maximum capacity of the network (scalar value).
+%     gens         - Maximum capacity of the generators.
+%     gens         - Starting state of the generators.
 %     T            - Number of time steps (hours) over which the demand profile is generated.
 %
 %   Outputs:
 %     demand_profile - Vector of length T representing the demand profile for the network.
 %
 %   Example:
-%     demand_profile = demand(1000, 24);
-%     This generates a demand profile for a network with a maximum capacity of 1000 MWh over 24 hours.
+%     demand_profile = demand([455, 455, 120, 30], [1, 1, 0, 0], 24);
+%     This generates a demand profile for a network with four generators
+%     with maximum capacities of 455, 455, 120, 30 MWh over 24 hours under assumption that the first two generators are running at T=1.
 %
 %   Notes:
 %     - The base demand is sinusoidal with a peak-to-peak variation of 50% of the max capacity.
@@ -21,6 +23,9 @@ function demand_profile = demand(max_capacity, T)
 %     - The resulting demand profile is shifted by 6 time steps to simulate realistic demand patterns.
 %     - Demand values are constrained to be non-negative and not exceed the maximum capacity.
 
+% Compute constraints on maximum capaciti and feasible starting point
+starting_capacity = sum(gens(start == 1));
+max_capacity = sum(gens);
 % Create a base demand profile using a sinusoidal function
 % The base demand is a sinusoidal wave oscillating between 0.5*max_capacity and max_capacity.
 % The factor 0.25*(3 + sin(...)) ensures the demand oscillates around a base level with some variation.
@@ -41,4 +46,8 @@ demand_profile = max(0, min(demand_profile, max_capacity));
 % Circshift the demand profile by 6 time steps
 % This can be used to simulate a different starting point in the demand cycle.
 demand_profile = circshift(demand_profile, 6);
+
+% Additional constraint for the starting state
+demand_profile(1) = min(demand_profile(1), starting_capacity);
+
 end
