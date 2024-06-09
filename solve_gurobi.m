@@ -49,9 +49,11 @@ function result = solve_gurobi(network)
     model.sense = '<';
     model.vtype = [repmat('C', 1, N*T), repmat('B', 1, 2*N*T), repmat('C', 1, 2*T)]; % N*T continuous, 2N*T binary variables
 
+    params.Threads = 1;
+
     % Write the model into 'model.lp'
     gurobi_write(model, 'model.lp');
     % Solve
-    result = gurobi(model);  
+    result = gurobi(model, params);  
     
 end
