@@ -6,7 +6,7 @@ function demand_profile = demand(gens, start, T)
 %
 %   Inputs:
 %     gens         - Maximum capacity of the generators.
-%     gens         - Starting state of the generators.
+%     start        - Starting state of the generators.
 %     T            - Number of time steps (hours) over which the demand profile is generated.
 %
 %   Outputs:
