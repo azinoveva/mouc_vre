@@ -33,8 +33,8 @@ base_demand = max_capacity * 0.25 * (3 + sin(2 * pi * (0:T-1) / T));
 
 % Add random variation to the base demand profile
 % Random variation is introduced to simulate more realistic demand fluctuations.
-% The variation is a Gaussian noise with a standard deviation of 10% of max_capacity.
-variation = max_capacity * 0.1 * randn(1, T);
+% The variation is a Gaussian noise with a standard deviation of 5% of max_capacity.
+variation = max_capacity * 0.05 * randn(1, T);
 
 % Combine the base demand with the random variation
 demand_profile = base_demand + variation;
