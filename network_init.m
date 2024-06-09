@@ -71,7 +71,8 @@ start = [1, 1, zeros(1, Nconv-2), 1, 0];
 
 % Generate demand for T hours based on conventional units and their
 % starting state
-D = demand(G_max, start(1:end-2), T);
+D = demand(G_max, start(1:end-2), T); 
+network.demand = D;
 
 % Minimal running time of the units
 T_min = [8, 8, 5, 5, 6, 3, 3, 1, 1, 1];
