@@ -45,7 +45,7 @@ demand_profile = max(0, min(demand_profile, max_capacity));
 
 % Circshift the demand profile by 6 time steps
 % This can be used to simulate a different starting point in the demand cycle.
-demand_profile = circshift(demand_profile, 6);
+demand_profile = circshift(demand_profile, 4);
 
 % Additional constraint for the starting state
 demand_profile(1) = min(demand_profile(1), starting_capacity);
